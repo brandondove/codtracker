@@ -1,0 +1,14 @@
+# Track only project code; WordPress core, config, uploads, and logs stay out of git.
+/*
+!/.gitignore
+!/wp-content/
+
+/wp-content/*
+!/wp-content/plugins/
+
+/wp-content/plugins/*
+!/wp-content/plugins/codtracker/
+
+.DS_Store
+node_modules/
+.enjoy-logs/
