@@ -1,0 +1,19 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "codt/checklist",
+	"version": "0.2.0",
+	"title": "DMZ Checklist",
+	"category": "widgets",
+	"icon": "yes-alt",
+	"description": "Categorized MW4 DMZ checklist with per-user progress.",
+	"textdomain": "codtracker",
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ]
+	},
+	"editorScript": "file:./index.js",
+	"viewScript": "file:./view.js",
+	"style": "file:./style.css",
+	"render": "file:./render.php"
+}
