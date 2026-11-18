@@ -1,0 +1,78 @@
+/**
+ * Front-end login form (core/loginout block in form mode).
+ * Uses Twenty Twenty-Five presets, with fallbacks for other themes.
+ */
+
+.wp-block-loginout #loginform {
+	max-width: 26rem;
+	padding: var(--wp--preset--spacing--50, 2rem);
+	border: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast, #111) 15%, transparent);
+	border-radius: 0.75rem;
+	background: var(--wp--preset--color--base, #fff);
+}
+
+.wp-block-loginout #loginform p {
+	margin: 0 0 var(--wp--preset--spacing--30, 1rem);
+}
+
+.wp-block-loginout #loginform label {
+	display: block;
+	margin-bottom: 0.375rem;
+	font-size: var(--wp--preset--font-size--small, 0.875rem);
+	font-weight: 500;
+}
+
+.wp-block-loginout #loginform .input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0.75rem 1rem;
+	border: 1px solid color-mix(in srgb, var(--wp--preset--color--contrast, #111) 25%, transparent);
+	border-radius: 0.5rem;
+	background: var(--wp--preset--color--base, #fff);
+	color: var(--wp--preset--color--contrast, #111);
+	font: inherit;
+	font-size: var(--wp--preset--font-size--medium, 1rem);
+}
+
+.wp-block-loginout #loginform .input:focus {
+	border-color: var(--wp--preset--color--contrast, #111);
+	outline: 2px solid var(--wp--preset--color--accent-4, #686868);
+	outline-offset: 2px;
+}
+
+.wp-block-loginout #loginform .login-remember label {
+	display: inline-flex;
+	gap: 0.5rem;
+	align-items: center;
+	margin: 0;
+	font-weight: 400;
+	cursor: pointer;
+}
+
+.wp-block-loginout #loginform .login-remember input {
+	width: 1rem;
+	height: 1rem;
+	margin: 0;
+	accent-color: var(--wp--preset--color--contrast, #111);
+}
+
+.wp-block-loginout #loginform .login-submit {
+	margin-top: var(--wp--preset--spacing--40, 1.5rem);
+}
+
+.wp-block-loginout #loginform #wp-submit {
+	width: 100%;
+	border-radius: 0.5rem;
+	cursor: pointer;
+}
+
+.wp-block-loginout #loginform .codt-login-links {
+	margin: var(--wp--preset--spacing--30, 1rem) 0 0;
+	font-size: var(--wp--preset--font-size--small, 0.875rem);
+	text-align: center;
+}
+
+.wp-block-loginout .login-error,
+.wp-block-loginout .login-message {
+	max-width: 26rem;
+}

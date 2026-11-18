@@ -25,6 +25,24 @@ class CodTracker_Access {
 		add_action( 'template_redirect', array( __CLASS__, 'gate' ) );
 		add_filter( 'login_redirect', array( __CLASS__, 'login_redirect' ), 10, 3 );
 		add_filter( 'login_form_bottom', array( __CLASS__, 'form_links' ) );
+		add_action( 'init', array( __CLASS__, 'enqueue_form_style' ) );
+	}
+
+	/**
+	 * Style the core Login/out block's form. Loaded only on pages that render the block.
+	 *
+	 * @return void
+	 */
+	public static function enqueue_form_style(): void {
+		wp_enqueue_block_style(
+			'core/loginout',
+			array(
+				'handle' => 'codt-login',
+				'src'    => plugins_url( 'assets/css/login.css', CODT_DIR . 'codtracker.php' ),
+				'path'   => CODT_DIR . 'assets/css/login.css',
+				'ver'    => CODT_VERSION,
+			)
+		);
 	}
 
 	/**
