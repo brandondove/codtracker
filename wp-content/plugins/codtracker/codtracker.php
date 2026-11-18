@@ -24,10 +24,12 @@ require_once CODT_DIR . 'includes/class-codtracker-admin.php';
 require_once CODT_DIR . 'includes/class-codtracker-progress.php';
 require_once CODT_DIR . 'includes/class-codtracker-rest.php';
 require_once CODT_DIR . 'includes/class-codtracker-seeder.php';
+require_once CODT_DIR . 'includes/class-codtracker-access.php';
 
 CodTracker_Content::init();
 CodTracker_Admin::init();
 CodTracker_Rest::init();
+CodTracker_Access::init();
 
 add_action( 'init', 'codt_register_blocks' );
 
