@@ -111,6 +111,9 @@ if ( ! function_exists( 'codt_render_category' ) ) {
 					<?php if ( $logged_in && $node['items'] ) : ?>
 						<button type="button" class="codt-cat__bulk"><?php esc_html_e( 'Mark completed', 'codtracker' ); ?></button>
 					<?php endif; ?>
+					<button type="button" class="codt-cat__pin" aria-pressed="false" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: section name. */ __( 'Pin to wheel: %s', 'codtracker' ), $term->name ) ); ?>">
+						<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M9 3h6l-1 6 4 4v2h-5v6l-1 1-1-1v-6H6v-2l4-4z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/></svg>
+					</button>
 				</summary>
 				<?php if ( $term->description ) : ?>
 					<p class="codt-cat__desc"><?php echo esc_html( $term->description ); ?></p>
@@ -176,6 +179,20 @@ $codt_wrapper = get_block_wrapper_attributes(
 			</div>
 			<label class="codt-toolbar__toggle"><input type="checkbox" class="codt-toggle-unconfirmed" checked /> <?php esc_html_e( 'Show unconfirmed', 'codtracker' ); ?></label>
 			<button type="button" class="codt-expand" data-expanded="0"><?php esc_html_e( 'Expand all', 'codtracker' ); ?></button>
+			<button type="button" class="codt-wheel-btn" aria-expanded="false" aria-controls="codt-wheel-panel"><?php esc_html_e( 'Ping wheel', 'codtracker' ); ?> <span class="codt-wheel-btn__count"></span></button>
+			<div class="codt-wheel-panel" id="codt-wheel-panel" hidden>
+				<p class="codt-wheel-panel__hint">
+					<?php
+					printf(
+						/* translators: %s: keyboard key name. */
+						esc_html__( 'Hold %s, point at a section, and release to jump to it. Pin up to 8 sections with the pin on each section header, then set their order here.', 'codtracker' ),
+						'<kbd>' . esc_html__( 'Left Ctrl', 'codtracker' ) . '</kbd>'
+					);
+					?>
+				</p>
+				<p class="codt-wheel-panel__empty"><?php esc_html_e( 'Nothing pinned yet.', 'codtracker' ); ?></p>
+				<ol class="codt-wheel-panel__list"></ol>
+			</div>
 		</div>
 
 		<div class="codt-status" role="status" aria-live="polite"></div>
