@@ -42,6 +42,22 @@ function codt_register_blocks(): void {
 	register_block_type( CODT_DIR . 'blocks/checklist' );
 }
 
+add_action( 'wp_enqueue_scripts', 'codt_enqueue_theme_style' );
+
+/**
+ * Load the site-wide dark skin on the front end.
+ *
+ * @return void
+ */
+function codt_enqueue_theme_style(): void {
+	wp_enqueue_style(
+		'codt-theme',
+		plugins_url( 'assets/css/theme.css', __FILE__ ),
+		array(),
+		CODT_VERSION
+	);
+}
+
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once CODT_DIR . 'includes/class-codtracker-cli.php';
 	WP_CLI::add_command( 'codt', 'CodTracker_CLI' );
