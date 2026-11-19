@@ -102,7 +102,7 @@ if ( ! function_exists( 'codt_render_category' ) ) {
 		$tag  = 0 === $depth ? 'h2' : 'h3';
 		?>
 		<section class="codt-cat codt-cat--depth-<?php echo esc_attr( (string) min( $depth, 2 ) ); ?>" data-cat="<?php echo esc_attr( $term->slug ); ?>">
-			<details <?php echo 0 === $depth ? 'open' : ''; ?>>
+			<details>
 				<summary class="codt-cat__head">
 					<<?php echo esc_html( $tag ); ?> class="codt-cat__title"><?php echo esc_html( $term->name ); ?></<?php echo esc_html( $tag ); ?>>
 					<span class="codt-cat__count" aria-live="polite"></span>
