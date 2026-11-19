@@ -155,9 +155,10 @@ class CodTracker_Content {
 	/**
 	 * Build the category tree with published items attached, ordered for display.
 	 *
+	 * @param array<int, array<int, int>> $user_order Optional per-user order, parent term ID => child term IDs.
 	 * @return array<int, array<string, mixed>> Top-level category nodes.
 	 */
-	public static function get_tree(): array {
+	public static function get_tree( array $user_order = array() ): array {
 		$terms = get_terms(
 			array(
 				'taxonomy'   => self::TAXONOMY,
@@ -218,11 +219,51 @@ class CodTracker_Content {
 
 		self::sort_nodes( $roots );
 
+		if ( $user_order ) {
+			self::apply_user_order( $roots, $user_order, 0 );
+		}
+
 		return $roots;
 	}
 
 	/**
-	 * Recursively sort category nodes by order, then name.
+	 * Recursively reorder sibling nodes by a user's saved order.
+	 *
+	 * Sections in the saved list fill the slots that listed sections held in the default order;
+	 * sections not in the list (e.g. added later) stay in their default slot.
+	 *
+	 * @param array<int, array<string, mixed>> $nodes      Sibling nodes, already in default order.
+	 * @param array<int, array<int, int>>      $user_order Parent term ID => ordered child term IDs.
+	 * @param int                              $parent_id  Parent term ID of these siblings (0 = top level).
+	 * @return void
+	 */
+	private static function apply_user_order( array &$nodes, array $user_order, int $parent_id ): void {
+		if ( ! empty( $user_order[ $parent_id ] ) ) {
+			$rank   = array_flip( $user_order[ $parent_id ] );
+			$listed = array_values(
+				array_filter( $nodes, static fn( array $node ): bool => isset( $rank[ $node['term']->term_id ] ) )
+			);
+			usort(
+				$listed,
+				static fn( array $a, array $b ): int => $rank[ $a['term']->term_id ] <=> $rank[ $b['term']->term_id ]
+			);
+
+			$merged = array();
+			$next   = 0;
+			foreach ( $nodes as $node ) {
+				$merged[] = isset( $rank[ $node['term']->term_id ] ) ? $listed[ $next++ ] : $node;
+			}
+			$nodes = $merged;
+		}
+
+		foreach ( $nodes as &$node ) {
+			self::apply_user_order( $node['children'], $user_order, (int) $node['term']->term_id );
+		}
+		unset( $node );
+	}
+
+	/**
+	 * Recursively sort category nodes by order, then name, and record each node's default position.
 	 *
 	 * @param array<int, array<string, mixed>> $nodes Nodes to sort in place.
 	 * @return void
@@ -232,7 +273,8 @@ class CodTracker_Content {
 			$nodes,
 			static fn( array $a, array $b ): int => array( $a['order'], $a['term']->name ) <=> array( $b['order'], $b['term']->name )
 		);
-		foreach ( $nodes as &$node ) {
+		foreach ( $nodes as $index => &$node ) {
+			$node['default_index'] = $index;
 			self::sort_nodes( $node['children'] );
 		}
 		unset( $node );

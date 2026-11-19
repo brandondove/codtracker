@@ -257,6 +257,239 @@
 			save( item, next );
 		} );
 
+		// Section sorting: drag a section's handle, or focus it and press Up/Down, to move it
+		// among its siblings. Each user's order is saved server-side, one parent at a time.
+		const saveDelay = 400;
+		const scrollEdge = 60;
+		const pendingOrder = new Map();
+		let orderQueue = Promise.resolve();
+		let dragging = null;
+		const resetOrderBtn = root.querySelector( '.codt-reset-order' );
+		const srStatus = root.querySelector( '.codt-sr-status' );
+
+		// Non-error updates for screen readers only; the visible status line is for errors.
+		function srAnnounce( msg ) {
+			if ( srStatus ) {
+				srStatus.textContent = msg;
+			}
+		}
+
+		function siblingCats( cat ) {
+			return Array.from( cat.parentElement.children ).filter( ( el ) => el.classList.contains( 'codt-cat' ) );
+		}
+
+		// Each set of sibling sections, as an array of section elements in DOM order.
+		function sectionGroups() {
+			const parents = new Set( Array.from( root.querySelectorAll( '.codt-cat' ) ).map( ( cat ) => cat.parentElement ) );
+			return Array.from( parents ).map( ( parent ) => siblingCats( parent.querySelector( ':scope > .codt-cat' ) ) );
+		}
+
+		function byDefault( cats ) {
+			return cats.slice().sort( ( a, b ) => Number( a.dataset.defaultIndex ) - Number( b.dataset.defaultIndex ) );
+		}
+
+		// Only offer Reset order when some group differs from the default order.
+		function updateResetOrder() {
+			if ( resetOrderBtn ) {
+				resetOrderBtn.disabled = sectionGroups().every( ( cats ) => byDefault( cats ).every( ( el, i ) => el === cats[ i ] ) );
+			}
+		}
+
+		// Put sections back in a previous order, keeping them ahead of any trailing non-section nodes.
+		function restoreOrder( cats ) {
+			const current = siblingCats( cats[ 0 ] );
+			const anchor = current[ current.length - 1 ].nextSibling;
+			cats.forEach( ( el ) => anchor ? anchor.before( el ) : el.parentElement.append( el ) );
+			updateResetOrder();
+		}
+
+		function postOrder( cat, previous ) {
+			const parentCat = cat.parentElement.closest( '.codt-cat' );
+			const order = siblingCats( cat ).map( ( el ) => Number( el.dataset.termId ) );
+			// Queue requests so a slow save can't land after a newer one.
+			orderQueue = orderQueue.then( () =>
+				window
+					.fetch( root.dataset.order, {
+						method: 'POST',
+						credentials: 'same-origin',
+						headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
+						body: JSON.stringify( { parent: parentCat ? Number( parentCat.dataset.termId ) : 0, order } ),
+					} )
+					.then( ( res ) => {
+						if ( ! res.ok ) {
+							throw new Error( res.status );
+						}
+						announce( '' );
+					} )
+					.catch( () => {
+						restoreOrder( previous );
+						announce( 'Could not save the new order. Check your connection or log in again.' );
+					} )
+			);
+		}
+
+		// Batch quick successive moves (e.g. holding an arrow key) into one save per sibling group.
+		function scheduleOrderSave( cat, previous, delay ) {
+			const group = cat.parentElement;
+			const pending = pendingOrder.get( group );
+			if ( pending ) {
+				window.clearTimeout( pending.timer );
+			}
+			const first = pending ? pending.previous : previous;
+			const timer = window.setTimeout( () => {
+				pendingOrder.delete( group );
+				const now = siblingCats( cat );
+				if ( now.some( ( el, i ) => el !== first[ i ] ) ) {
+					postOrder( cat, first );
+				}
+			}, delay );
+			pendingOrder.set( group, { timer, previous: first } );
+		}
+
+		root.addEventListener( 'click', ( event ) => {
+			// The handle sits inside <summary>; don't let it toggle the section.
+			if ( event.target.closest( '.codt-cat__drag' ) ) {
+				event.preventDefault();
+			}
+		} );
+
+		root.addEventListener( 'keydown', ( event ) => {
+			const handle = event.target.closest( '.codt-cat__drag' );
+			if ( ! handle || ( event.key !== 'ArrowUp' && event.key !== 'ArrowDown' ) ) {
+				return;
+			}
+			event.preventDefault();
+			const cat = handle.closest( '.codt-cat' );
+			const previous = siblingCats( cat );
+			const visible = previous.filter( ( el ) => ! el.hidden );
+			const i = visible.indexOf( cat );
+			const target = visible[ event.key === 'ArrowUp' ? i - 1 : i + 1 ];
+			if ( ! target ) {
+				return;
+			}
+			if ( event.key === 'ArrowUp' ) {
+				target.before( cat );
+			} else {
+				target.after( cat );
+			}
+			// Moving the node drops focus; put it back so repeated presses keep working.
+			handle.focus();
+			cat.scrollIntoView( { block: 'nearest' } );
+			const moved = siblingCats( cat ).filter( ( el ) => ! el.hidden );
+			srAnnounce( catTitle( cat ) + ' moved to position ' + ( moved.indexOf( cat ) + 1 ) + ' of ' + moved.length + '.' );
+			updateResetOrder();
+			scheduleOrderSave( cat, previous, saveDelay );
+		} );
+
+		// Drop the dragged section before the first visible sibling whose midpoint is below the pointer.
+		function repositionDrag() {
+			const { cat, y } = dragging;
+			const others = siblingCats( cat ).filter( ( el ) => el !== cat && ! el.hidden );
+			const next = others.find( ( el ) => {
+				const r = el.getBoundingClientRect();
+				return y < r.top + r.height / 2;
+			} );
+			if ( next ) {
+				if ( cat.nextElementSibling !== next ) {
+					next.before( cat );
+				}
+			} else if ( others.length && others[ others.length - 1 ].nextElementSibling !== cat ) {
+				others[ others.length - 1 ].after( cat );
+			}
+		}
+
+		// Scroll the page while the pointer is held near the top or bottom edge.
+		function dragScroll() {
+			if ( ! dragging ) {
+				return;
+			}
+			const { y } = dragging;
+			let step = 0;
+			if ( y < scrollEdge ) {
+				step = -Math.ceil( ( scrollEdge - y ) / 4 );
+			} else if ( y > window.innerHeight - scrollEdge ) {
+				step = Math.ceil( ( y - ( window.innerHeight - scrollEdge ) ) / 4 );
+			}
+			if ( step ) {
+				window.scrollBy( 0, step );
+				repositionDrag();
+			}
+			dragging.frame = window.requestAnimationFrame( dragScroll );
+		}
+
+		root.addEventListener( 'pointerdown', ( event ) => {
+			const handle = event.target.closest( '.codt-cat__drag' );
+			if ( ! handle || event.button !== 0 || dragging ) {
+				return;
+			}
+			event.preventDefault();
+			const cat = handle.closest( '.codt-cat' );
+			handle.setPointerCapture( event.pointerId );
+			dragging = { cat, pointerId: event.pointerId, previous: siblingCats( cat ), y: event.clientY, frame: 0 };
+			cat.classList.add( 'is-dragging' );
+			root.classList.add( 'is-sorting' );
+			dragging.frame = window.requestAnimationFrame( dragScroll );
+		} );
+
+		root.addEventListener( 'pointermove', ( event ) => {
+			if ( ! dragging || event.pointerId !== dragging.pointerId ) {
+				return;
+			}
+			dragging.y = event.clientY;
+			repositionDrag();
+		} );
+
+		function endDrag( event ) {
+			if ( ! dragging || event.pointerId !== dragging.pointerId ) {
+				return;
+			}
+			const { cat, previous, frame } = dragging;
+			window.cancelAnimationFrame( frame );
+			dragging = null;
+			cat.classList.remove( 'is-dragging' );
+			root.classList.remove( 'is-sorting' );
+			if ( event.type === 'pointercancel' ) {
+				restoreOrder( previous );
+				return;
+			}
+			updateResetOrder();
+			scheduleOrderSave( cat, previous, 0 );
+		}
+
+		root.addEventListener( 'pointerup', endDrag );
+		root.addEventListener( 'pointercancel', endDrag );
+
+		// Put every section back in the default order and forget the saved order; undo on failure.
+		if ( resetOrderBtn ) {
+			resetOrderBtn.addEventListener( 'click', () => {
+				pendingOrder.forEach( ( pending ) => window.clearTimeout( pending.timer ) );
+				pendingOrder.clear();
+				const previous = sectionGroups();
+				previous.forEach( ( cats ) => restoreOrder( byDefault( cats ) ) );
+				announce( '' );
+				srAnnounce( 'Section order reset.' );
+				orderQueue = orderQueue.then( () =>
+					window
+						.fetch( root.dataset.order, {
+							method: 'DELETE',
+							credentials: 'same-origin',
+							headers: { 'X-WP-Nonce': nonce },
+						} )
+						.then( ( res ) => {
+							if ( ! res.ok ) {
+								throw new Error( res.status );
+							}
+						} )
+						.catch( () => {
+							previous.forEach( restoreOrder );
+							announce( 'Could not reset the order. Check your connection or log in again.' );
+						} )
+				);
+			} );
+		}
+
+		updateResetOrder();
+
 		search.addEventListener( 'input', applyFilters );
 		showUnconfirmed.addEventListener( 'change', applyFilters );
 
@@ -275,7 +508,7 @@
 		// auto-open change the view only, not the saved state.
 		root.addEventListener( 'click', ( event ) => {
 			const head = event.target.closest( '.codt-cat__head' );
-			if ( ! head || event.target.closest( '.codt-cat__bulk, .codt-cat__pin' ) ) {
+			if ( ! head || event.target.closest( '.codt-cat__bulk, .codt-cat__pin, .codt-cat__drag' ) ) {
 				return;
 			}
 			const slug = head.closest( '.codt-cat' ).dataset.cat;

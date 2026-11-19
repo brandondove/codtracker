@@ -125,7 +125,8 @@
 }
 
 .codt-filter,
-.codt-expand {
+.codt-expand,
+.codt-reset-order {
 	padding: 0.5rem 0.9rem 0.4rem;
 	font: inherit;
 	font-family: var(--codt-display);
@@ -143,7 +144,8 @@
 }
 
 .codt-filter:hover,
-.codt-expand:hover {
+.codt-expand:hover,
+.codt-reset-order:hover:not(:disabled) {
 	color: var(--codt-accent);
 }
 
@@ -152,8 +154,14 @@
 	color: var(--codt-on-accent);
 }
 
-.codt-expand {
+.codt-expand,
+.codt-reset-order {
 	border: 1px solid var(--codt-border);
+}
+
+.codt-reset-order:disabled {
+	opacity: 0.4;
+	cursor: default;
 }
 
 .codt-toolbar__toggle {
@@ -733,4 +741,45 @@ details[open] > .codt-cat__head::before {
 	text-align: center;
 	text-transform: uppercase;
 	color: #e4e4de;
+}
+
+/* Section sorting: drag handle on each section header. */
+.codt-cat__drag {
+	order: -1;
+	display: grid;
+	place-content: center;
+	flex: none;
+	width: 1.4rem;
+	height: 1.9rem;
+	margin-right: -0.4rem;
+	padding: 0;
+	color: var(--codt-muted);
+	background: transparent;
+	border: 1px solid transparent;
+	cursor: grab;
+	touch-action: none;
+}
+
+.codt-cat__drag:hover,
+.codt-cat__drag:focus-visible {
+	color: var(--codt-accent);
+}
+
+.codt-cat__drag:focus-visible {
+	border-color: var(--codt-accent);
+	outline: none;
+}
+
+.codt-tracker.is-sorting,
+.codt-tracker.is-sorting * {
+	cursor: grabbing;
+	user-select: none;
+}
+
+.codt-cat.is-dragging {
+	position: relative;
+	z-index: 1;
+	outline: 1px dashed var(--codt-accent);
+	outline-offset: 2px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }

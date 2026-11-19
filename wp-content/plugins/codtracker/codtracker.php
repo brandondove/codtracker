@@ -22,6 +22,7 @@ define( 'CODT_DIR', plugin_dir_path( __FILE__ ) );
 require_once CODT_DIR . 'includes/class-codtracker-content.php';
 require_once CODT_DIR . 'includes/class-codtracker-admin.php';
 require_once CODT_DIR . 'includes/class-codtracker-progress.php';
+require_once CODT_DIR . 'includes/class-codtracker-section-order.php';
 require_once CODT_DIR . 'includes/class-codtracker-rest.php';
 require_once CODT_DIR . 'includes/class-codtracker-seeder.php';
 require_once CODT_DIR . 'includes/class-codtracker-access.php';
