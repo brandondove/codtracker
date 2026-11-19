@@ -13,6 +13,25 @@
 		const expandBtn = root.querySelector( '.codt-expand' );
 		const empty = root.querySelector( '.codt-empty' );
 		let filter = 'all';
+		const storageKey = 'codt-open-sections';
+
+		// Read the saved list of open category slugs; storage can be unavailable or hold junk.
+		function readOpen() {
+			try {
+				const saved = JSON.parse( window.localStorage.getItem( storageKey ) || '[]' );
+				return Array.isArray( saved ) ? saved : [];
+			} catch ( e ) {
+				return [];
+			}
+		}
+
+		function writeOpen( slugs ) {
+			try {
+				window.localStorage.setItem( storageKey, JSON.stringify( slugs ) );
+			} catch ( e ) {
+				// Storage full or blocked; the open state just won't persist.
+			}
+		}
 
 		function setBar( bar, done, total ) {
 			const fill = bar && bar.querySelector( '.codt-bar__fill' );
@@ -166,11 +185,34 @@
 			} );
 		} );
 
+		// Remember sections the user opens or closes by hand. Expand all and search/filter
+		// auto-open change the view only, not the saved state.
+		root.addEventListener( 'click', ( event ) => {
+			const head = event.target.closest( '.codt-cat__head' );
+			if ( ! head ) {
+				return;
+			}
+			const slug = head.closest( '.codt-cat' ).dataset.cat;
+			const willOpen = ! head.parentElement.open;
+			const saved = readOpen().filter( ( s ) => s !== slug );
+			if ( willOpen ) {
+				saved.push( slug );
+			}
+			writeOpen( saved );
+		} );
+
 		expandBtn.addEventListener( 'click', () => {
 			const expand = expandBtn.dataset.expanded !== '1';
 			root.querySelectorAll( '.codt-cat > details' ).forEach( ( d ) => ( d.open = expand ) );
 			expandBtn.dataset.expanded = expand ? '1' : '0';
 			expandBtn.textContent = expand ? 'Collapse all' : 'Expand all';
+		} );
+
+		readOpen().forEach( ( slug ) => {
+			const details = root.querySelector( '.codt-cat[data-cat="' + CSS.escape( slug ) + '"] > details' );
+			if ( details ) {
+				details.open = true;
+			}
 		} );
 
 		root.querySelectorAll( '.codt-item' ).forEach( ( item ) => {
