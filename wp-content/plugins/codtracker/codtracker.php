@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       CodTracker
  * Description:       Categorized checklist for tracking Call of Duty: Modern Warfare 4 DMZ unlocks, missions, and collectibles.
- * Version:           0.2.0
+ * Version:           0.3.0
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Author:            Pixel Jar
@@ -16,7 +16,7 @@ declare( strict_types = 1 );
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'CODT_VERSION', '0.2.0' );
+define( 'CODT_VERSION', '0.3.0' );
 define( 'CODT_DIR', plugin_dir_path( __FILE__ ) );
 
 require_once CODT_DIR . 'includes/class-codtracker-content.php';
