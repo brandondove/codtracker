@@ -21,9 +21,9 @@ if ( ! function_exists( 'codt_render_item' ) ) {
 	/**
 	 * Render one checklist item.
 	 *
-	 * @param WP_Post          $item       Item post.
-	 * @param array<int, int>  $progress   Item ID => completion count.
-	 * @param bool             $logged_in  Whether the viewer can save.
+	 * @param WP_Post         $item      Item post.
+	 * @param array<int, int> $progress  Item ID => completion count.
+	 * @param bool            $logged_in Whether the viewer can save.
 	 * @return void
 	 */
 	function codt_render_item( WP_Post $item, array $progress, bool $logged_in ): void {
