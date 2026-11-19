@@ -108,6 +108,9 @@ if ( ! function_exists( 'codt_render_category' ) ) {
 					<<?php echo esc_html( $tag ); ?> class="codt-cat__title"><?php echo esc_html( $term->name ); ?></<?php echo esc_html( $tag ); ?>>
 					<span class="codt-cat__count" aria-live="polite"></span>
 					<span class="codt-bar" aria-hidden="true"><span class="codt-bar__fill"></span></span>
+					<?php if ( $logged_in && $node['items'] ) : ?>
+						<button type="button" class="codt-cat__bulk"><?php esc_html_e( 'Mark completed', 'codtracker' ); ?></button>
+					<?php endif; ?>
 				</summary>
 				<?php if ( $term->description ) : ?>
 					<p class="codt-cat__desc"><?php echo esc_html( $term->description ); ?></p>
@@ -136,6 +139,7 @@ $codt_wrapper = get_block_wrapper_attributes(
 	array(
 		'class'          => 'codt-tracker',
 		'data-endpoint'  => esc_url_raw( rest_url( CodTracker_Rest::NAMESPACE . '/progress' ) ),
+		'data-bulk'      => esc_url_raw( rest_url( CodTracker_Rest::NAMESPACE . '/progress/bulk' ) ),
 		'data-nonce'     => $codt_logged_in ? wp_create_nonce( 'wp_rest' ) : '',
 		'data-logged-in' => $codt_logged_in ? '1' : '0',
 	)

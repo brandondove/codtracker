@@ -246,6 +246,31 @@ details[open] > .codt-cat__head::before {
 	margin-left: auto;
 }
 
+.codt-cat__bulk {
+	flex: none;
+	padding: 0.3rem 0.6rem 0.2rem;
+	font: inherit;
+	font-family: var(--codt-display);
+	font-size: 0.8rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: inherit;
+	background: transparent;
+	border: 1px solid var(--codt-border);
+	cursor: pointer;
+}
+
+.codt-cat__bulk:hover,
+.codt-cat__bulk:focus-visible {
+	color: var(--codt-accent);
+	border-color: var(--codt-accent);
+}
+
+.codt-cat__bulk:disabled {
+	opacity: 0.5;
+	cursor: progress;
+}
+
 .codt-cat__desc {
 	margin: 0.25rem 1rem 0.75rem;
 	padding: 0.6rem 0.85rem;
@@ -376,6 +401,10 @@ details[open] > .codt-cat__head::before {
 @media (max-width: 600px) {
 	.codt-cat__head .codt-bar {
 		display: none;
+	}
+
+	.codt-cat__bulk {
+		margin-left: auto;
 	}
 }
 
