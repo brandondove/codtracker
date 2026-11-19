@@ -50,6 +50,11 @@
 			return sum;
 		}
 
+		// Items that belong directly to a section, not to its subsections.
+		function ownItems( cat ) {
+			return Array.from( cat.querySelectorAll( ':scope > details > .codt-items > .codt-item' ) );
+		}
+
 		function updateCounts() {
 			root.querySelectorAll( '.codt-cat' ).forEach( ( cat ) => {
 				const items = cat.querySelectorAll( '.codt-item' );
@@ -58,6 +63,14 @@
 				head.querySelector( '.codt-cat__count' ).textContent = done + ' / ' + items.length;
 				setBar( head.querySelector( '.codt-bar' ), partialDone( items ), items.length );
 				cat.classList.toggle( 'is-complete', items.length > 0 && done === items.length );
+
+				const bulk = head.querySelector( '.codt-cat__bulk' );
+				if ( bulk ) {
+					const own = ownItems( cat );
+					const label = own.every( ( item ) => item.classList.contains( 'is-collected' ) ) ? 'Mark incomplete' : 'Mark completed';
+					bulk.textContent = label;
+					bulk.setAttribute( 'aria-label', label + ': ' + head.querySelector( '.codt-cat__title' ).textContent );
+				}
 			} );
 			const allItems = root.querySelectorAll( '.codt-item' );
 			const all = allItems.length;
@@ -164,6 +177,66 @@
 				} );
 		}
 
+		// Fill or clear every item in one section with a single request; roll the batch back on failure.
+		function saveMany( items, collected, btn ) {
+			const previous = items.map( ( item ) => Number( item.dataset.count ) || 0 );
+			let failed = false;
+
+			items.forEach( ( item ) => {
+				setItem( item, collected ? Number( item.dataset.goal ) || 1 : 0 );
+				setBusy( item, true );
+			} );
+			btn.disabled = true;
+			updateCounts();
+
+			window
+				.fetch( root.dataset.bulk, {
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
+					body: JSON.stringify( { item_ids: items.map( ( item ) => Number( item.dataset.id ) ), collected } ),
+				} )
+				.then( ( res ) => {
+					if ( ! res.ok ) {
+						throw new Error( res.status );
+					}
+					announce( '' );
+				} )
+				.catch( () => {
+					failed = true;
+					announce( 'Could not save. Check your connection or log in again.' );
+				} )
+				.finally( () => {
+					items.forEach( ( item, i ) => {
+						setBusy( item, false );
+						const box = item.querySelector( '.codt-item__check' );
+						if ( box ) {
+							box.disabled = false;
+						}
+						setItem( item, failed ? previous[ i ] : Number( item.dataset.count ) || 0 );
+					} );
+					btn.disabled = false;
+					updateCounts();
+					applyFilters();
+				} );
+		}
+
+		root.addEventListener( 'click', ( event ) => {
+			const btn = event.target.closest( '.codt-cat__bulk' );
+			if ( ! btn ) {
+				return;
+			}
+			// The button sits inside <summary>; don't let the click toggle the section.
+			event.preventDefault();
+			if ( btn.disabled ) {
+				return;
+			}
+			const items = ownItems( btn.closest( '.codt-cat' ) );
+			if ( items.length ) {
+				saveMany( items, items.some( ( item ) => ! item.classList.contains( 'is-collected' ) ), btn );
+			}
+		} );
+
 		root.addEventListener( 'change', ( event ) => {
 			const box = event.target;
 			if ( ! box.classList.contains( 'codt-item__check' ) ) {
@@ -202,7 +275,7 @@
 		// auto-open change the view only, not the saved state.
 		root.addEventListener( 'click', ( event ) => {
 			const head = event.target.closest( '.codt-cat__head' );
-			if ( ! head ) {
+			if ( ! head || event.target.closest( '.codt-cat__bulk' ) ) {
 				return;
 			}
 			const slug = head.closest( '.codt-cat' ).dataset.cat;
