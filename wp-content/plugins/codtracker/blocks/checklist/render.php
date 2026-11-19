@@ -50,6 +50,7 @@ if ( ! function_exists( 'codt_render_item' ) ) {
 						<button type="button" class="codt-counter__btn" data-step="1" aria-label="<?php esc_attr_e( 'Increase', 'codtracker' ); ?>" <?php disabled( ! $logged_in || $is_collected ); ?>>+</button>
 					</span>
 					<span class="codt-item__title"><?php echo esc_html( $item->post_title ); ?></span>
+					<span class="codt-bar codt-item__bar" aria-hidden="true"><span class="codt-bar__fill" style="width: <?php echo esc_attr( number_format( ( $count / $goal ) * 100, 1, '.', '' ) ); ?>%"></span></span>
 				<?php else : ?>
 					<input type="checkbox" class="codt-item__check" id="<?php echo esc_attr( $input_id ); ?>" <?php checked( $is_collected ); ?> <?php disabled( ! $logged_in ); ?> />
 					<label class="codt-item__title" for="<?php echo esc_attr( $input_id ); ?>"><?php echo esc_html( $item->post_title ); ?></label>

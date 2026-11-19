@@ -40,20 +40,32 @@
 			}
 		}
 
+		// Sum each item's share of its goal, so 1 of 3 manuals counts as a third of an item.
+		function partialDone( items ) {
+			let sum = 0;
+			items.forEach( ( item ) => {
+				const goal = Number( item.dataset.goal ) || 1;
+				sum += Math.min( Number( item.dataset.count ) || 0, goal ) / goal;
+			} );
+			return sum;
+		}
+
 		function updateCounts() {
 			root.querySelectorAll( '.codt-cat' ).forEach( ( cat ) => {
 				const items = cat.querySelectorAll( '.codt-item' );
 				const done = cat.querySelectorAll( '.codt-item.is-collected' ).length;
 				const head = cat.querySelector( ':scope > details > .codt-cat__head' );
 				head.querySelector( '.codt-cat__count' ).textContent = done + ' / ' + items.length;
-				setBar( head.querySelector( '.codt-bar' ), done, items.length );
+				setBar( head.querySelector( '.codt-bar' ), partialDone( items ), items.length );
 				cat.classList.toggle( 'is-complete', items.length > 0 && done === items.length );
 			} );
-			const all = root.querySelectorAll( '.codt-item' ).length;
+			const allItems = root.querySelectorAll( '.codt-item' );
+			const all = allItems.length;
 			const done = root.querySelectorAll( '.codt-item.is-collected' ).length;
+			const progress = partialDone( allItems );
 			root.querySelector( '.codt-summary__count' ).textContent =
-				done + ' / ' + all + ' (' + ( all ? Math.round( ( done / all ) * 100 ) : 0 ) + '%)';
-			setBar( root.querySelector( '.codt-summary .codt-bar' ), done, all );
+				done + ' / ' + all + ' (' + ( all ? Math.round( ( progress / all ) * 100 ) : 0 ) + '%)';
+			setBar( root.querySelector( '.codt-summary .codt-bar' ), progress, all );
 		}
 
 		function applyFilters() {
@@ -104,6 +116,7 @@
 				item.querySelector( '[data-step="-1"]' ).disabled = count <= 0;
 				item.querySelector( '[data-step="1"]' ).disabled = count >= goal;
 			}
+			setBar( item.querySelector( '.codt-item__bar' ), count, goal );
 		}
 
 		function setBusy( item, busy ) {
