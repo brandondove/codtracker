@@ -64,6 +64,61 @@ class CodTracker_Rest {
 				),
 			)
 		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/progress/bulk',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( __CLASS__, 'update_progress_bulk' ),
+				'permission_callback' => 'is_user_logged_in',
+				'args'                => array(
+					'item_ids'  => array(
+						'description'       => 'Checklist item IDs to update.',
+						'type'              => 'array',
+						'items'             => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+						'minItems'          => 1,
+						'maxItems'          => 500,
+						'required'          => true,
+						'validate_callback' => array( __CLASS__, 'validate_items' ),
+					),
+					'collected' => array(
+						'description' => 'True sets each item to its goal, false clears it.',
+						'type'        => 'boolean',
+						'required'    => true,
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Validate the item_ids schema, then ensure every ID is a published checklist item.
+	 *
+	 * @param mixed           $value   Item IDs.
+	 * @param WP_REST_Request $request Request.
+	 * @param string          $param   Parameter name.
+	 * @return true|WP_Error
+	 */
+	public static function validate_items( $value, WP_REST_Request $request, string $param ) {
+		$valid = rest_validate_request_arg( $value, $request, $param );
+		if ( true !== $valid ) {
+			return $valid;
+		}
+
+		$ids = array_map( 'absint', (array) $value );
+		_prime_post_caches( $ids, false, true );
+
+		foreach ( $ids as $id ) {
+			$item = self::validate_item( $id );
+			if ( true !== $item ) {
+				return $item;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -107,6 +162,18 @@ class CodTracker_Rest {
 		}
 
 		$counts = CodTracker_Progress::set( get_current_user_id(), $item_id, $count );
+		return rest_ensure_response( array( 'progress' => (object) $counts ) );
+	}
+
+	/**
+	 * Bulk POST handler: mark every listed item collected or cleared in one write.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public static function update_progress_bulk( WP_REST_Request $request ): WP_REST_Response {
+		$ids    = array_values( array_unique( array_map( 'absint', (array) $request['item_ids'] ) ) );
+		$counts = CodTracker_Progress::set_many( get_current_user_id(), $ids, (bool) $request['collected'] );
 		return rest_ensure_response( array( 'progress' => (object) $counts ) );
 	}
 }

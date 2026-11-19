@@ -68,6 +68,31 @@ class CodTracker_Progress {
 	}
 
 	/**
+	 * Mark several items collected (count = goal) or cleared (count = 0) in one write.
+	 *
+	 * @param int        $user_id   User ID.
+	 * @param array<int> $item_ids  Checklist item post IDs.
+	 * @param bool       $collected True to fill each item to its goal, false to clear it.
+	 * @return array<int, int> Updated counts.
+	 */
+	public static function set_many( int $user_id, array $item_ids, bool $collected ): array {
+		$counts = self::get( $user_id );
+
+		foreach ( $item_ids as $item_id ) {
+			$item_id = absint( $item_id );
+			if ( $collected ) {
+				$counts[ $item_id ] = self::goal( $item_id );
+			} else {
+				unset( $counts[ $item_id ] );
+			}
+		}
+
+		update_user_meta( $user_id, self::META_KEY, $counts );
+
+		return $counts;
+	}
+
+	/**
 	 * How many completions an item needs (1 for a plain checkbox).
 	 *
 	 * @param int $item_id Checklist item post ID.
