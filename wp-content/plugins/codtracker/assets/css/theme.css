@@ -1,0 +1,113 @@
+/**
+ * Site-wide dark tactical skin.
+ *
+ * Re-points Twenty Twenty-Five's color presets at a dark palette and adds a
+ * condensed, uppercase display face for headings. Loaded on every front-end page.
+ */
+
+:root {
+	--codt-bg: #0b0d0e;
+	--codt-bg-raised: #131618;
+	--codt-bg-panel: #181c1f;
+	--codt-text: #e4e4de;
+	--codt-text-muted: #8b9195;
+	--codt-line: rgba(228, 228, 222, 0.12);
+	--codt-line-strong: rgba(228, 228, 222, 0.28);
+	--codt-amber: #f2a313;
+	--codt-amber-bright: #ffbf3c;
+	--codt-amber-dim: rgba(242, 163, 19, 0.14);
+	--codt-on-amber: #0b0d0e;
+	--codt-alert: #ff5c47;
+	--codt-font-display: "DIN Condensed", "Bahnschrift SemiCondensed", "Bahnschrift", "Roboto Condensed", "Arial Narrow", sans-serif;
+	--codt-font-mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+	color-scheme: dark;
+}
+
+/* Theme presets: body beats the theme's :root declarations regardless of load order. */
+body {
+	--wp--preset--color--base: var(--codt-bg);
+	--wp--preset--color--contrast: var(--codt-text);
+	--wp--preset--color--accent-1: var(--codt-amber);
+	--wp--preset--color--accent-2: var(--codt-bg-panel);
+	--wp--preset--color--accent-3: var(--codt-amber-bright);
+	--wp--preset--color--accent-4: var(--codt-text-muted);
+	--wp--preset--color--accent-5: var(--codt-bg-raised);
+	--wp--preset--color--accent-6: var(--codt-line);
+	background-color: var(--codt-bg);
+	background-image:
+		radial-gradient(ellipse at 50% -10%, rgba(242, 163, 19, 0.07), transparent 55%),
+		linear-gradient(rgba(228, 228, 222, 0.025) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(228, 228, 222, 0.025) 1px, transparent 1px);
+	background-size: 100% 100%, 48px 48px, 48px 48px;
+	background-attachment: fixed;
+	color: var(--codt-text);
+}
+
+::selection {
+	background: var(--codt-amber);
+	color: var(--codt-on-amber);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.wp-block-site-title,
+.wp-block-post-title,
+.wp-block-navigation {
+	font-family: var(--codt-font-display);
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.wp-block-site-title a {
+	color: var(--codt-text);
+	text-decoration: none;
+}
+
+.wp-block-site-title a::before {
+	content: "";
+	display: inline-block;
+	width: 0.5em;
+	height: 0.5em;
+	margin-right: 0.45em;
+	vertical-align: 0.12em;
+	background: var(--codt-amber);
+}
+
+a:where(:not(.wp-element-button)) {
+	text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+	text-underline-offset: 0.2em;
+}
+
+a:where(:not(.wp-element-button)):hover {
+	color: var(--codt-amber-bright);
+}
+
+.wp-element-button,
+.wp-block-button__link,
+input[type="submit"] {
+	font-family: var(--codt-font-display);
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--codt-on-amber);
+	background-color: var(--codt-amber);
+	border: 0;
+	border-radius: 0;
+}
+
+.wp-element-button:hover,
+.wp-block-button__link:hover,
+input[type="submit"]:hover {
+	color: var(--codt-on-amber);
+	background-color: var(--codt-amber-bright);
+}
+
+:focus-visible {
+	outline: 2px solid var(--codt-amber);
+	outline-offset: 2px;
+}
