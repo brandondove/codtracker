@@ -63,19 +63,16 @@ h6,
 	text-transform: uppercase;
 }
 
-.wp-block-site-title a {
+.wp-block-site-title a,
+.wp-block-site-title a:hover {
 	color: var(--codt-text);
 	text-decoration: none;
 }
 
-.wp-block-site-title a::before {
-	content: "";
-	display: inline-block;
-	width: 0.5em;
-	height: 0.5em;
-	margin-right: 0.45em;
-	vertical-align: 0.12em;
-	background: var(--codt-amber);
+.codt-logo {
+	display: block;
+	width: auto;
+	height: 2.25rem;
 }
 
 a:where(:not(.wp-element-button)) {
