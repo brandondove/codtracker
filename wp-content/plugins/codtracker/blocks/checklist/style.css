@@ -91,6 +91,18 @@
 	border-bottom: 1px solid var(--codt-border);
 }
 
+/* Clear the fixed admin bar. Core sets the height var (32px, 46px under 783px). */
+.admin-bar .codt-toolbar {
+	top: var(--wp-admin--admin-bar--height, 32px);
+}
+
+/* Core switches the admin bar to position: absolute at this width, so it scrolls away. */
+@media (max-width: 600px) {
+	.admin-bar .codt-toolbar {
+		top: 0;
+	}
+}
+
 .codt-toolbar__search {
 	flex: 1 1 240px;
 	padding: 0.5rem 0.75rem;
