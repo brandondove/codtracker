@@ -425,6 +425,12 @@ details[open] > .codt-cat__head::before {
 	font-weight: 600;
 }
 
+.codt-item__bar {
+	flex: 0 1 120px;
+	min-width: 40px;
+	height: 4px;
+}
+
 .codt-item.is-collected .codt-counter__value {
 	color: var(--codt-on-accent);
 	background: var(--codt-accent);
