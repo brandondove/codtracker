@@ -93,6 +93,43 @@ class CodTracker_Rest {
 				),
 			)
 		);
+
+		register_rest_route(
+			self::NAMESPACE,
+			'/sections/order',
+			array(
+				array(
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( __CLASS__, 'update_section_order' ),
+					'permission_callback' => 'is_user_logged_in',
+					'args'                => array(
+						'parent' => array(
+							'description' => 'Parent category term ID; 0 for top-level sections.',
+							'type'        => 'integer',
+							'minimum'     => 0,
+							'required'    => true,
+						),
+						'order'  => array(
+							'description' => 'Child category term IDs in display order.',
+							'type'        => 'array',
+							'items'       => array(
+								'type'    => 'integer',
+								'minimum' => 1,
+							),
+							'minItems'    => 1,
+							'maxItems'    => 200,
+							'uniqueItems' => true,
+							'required'    => true,
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( __CLASS__, 'reset_section_order' ),
+					'permission_callback' => 'is_user_logged_in',
+				),
+			)
+		);
 	}
 
 	/**
@@ -175,5 +212,47 @@ class CodTracker_Rest {
 		$ids    = array_values( array_unique( array_map( 'absint', (array) $request['item_ids'] ) ) );
 		$counts = CodTracker_Progress::set_many( get_current_user_id(), $ids, (bool) $request['collected'] );
 		return rest_ensure_response( array( 'progress' => (object) $counts ) );
+	}
+
+	/**
+	 * Section order POST handler: save one parent's child order for the current user.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public static function update_section_order( WP_REST_Request $request ) {
+		$parent = (int) $request['parent'];
+		$ids    = array_map( 'absint', (array) $request['order'] );
+
+		// Every ID must be a category that sits directly under the given parent.
+		$parents = get_terms(
+			array(
+				'taxonomy'   => CodTracker_Content::TAXONOMY,
+				'include'    => $ids,
+				'hide_empty' => false,
+				'fields'     => 'id=>parent',
+			)
+		);
+		if ( is_wp_error( $parents ) || count( $parents ) !== count( $ids ) ) {
+			return new WP_Error( 'codt_invalid_section', __( 'Unknown section.', 'codtracker' ), array( 'status' => 400 ) );
+		}
+		foreach ( $parents as $term_parent ) {
+			if ( (int) $term_parent !== $parent ) {
+				return new WP_Error( 'codt_invalid_section', __( 'Sections can only be reordered within the same parent.', 'codtracker' ), array( 'status' => 400 ) );
+			}
+		}
+
+		$order = CodTracker_Section_Order::set( get_current_user_id(), $parent, $ids );
+		return rest_ensure_response( array( 'order' => (object) $order ) );
+	}
+
+	/**
+	 * Section order DELETE handler: drop the current user's saved order.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public static function reset_section_order(): WP_REST_Response {
+		CodTracker_Section_Order::clear( get_current_user_id() );
+		return rest_ensure_response( array( 'order' => new stdClass() ) );
 	}
 }

@@ -13,17 +13,17 @@ declare( strict_types = 1 );
 
 defined( 'ABSPATH' ) || exit;
 
-$codt_tree      = CodTracker_Content::get_tree();
 $codt_logged_in = is_user_logged_in();
+$codt_tree      = CodTracker_Content::get_tree( $codt_logged_in ? CodTracker_Section_Order::get( get_current_user_id() ) : array() );
 $codt_progress  = $codt_logged_in ? CodTracker_Progress::get( get_current_user_id() ) : array();
 
 if ( ! function_exists( 'codt_render_item' ) ) {
 	/**
 	 * Render one checklist item.
 	 *
-	 * @param WP_Post          $item       Item post.
-	 * @param array<int, int>  $progress   Item ID => completion count.
-	 * @param bool             $logged_in  Whether the viewer can save.
+	 * @param WP_Post         $item      Item post.
+	 * @param array<int, int> $progress  Item ID => completion count.
+	 * @param bool            $logged_in Whether the viewer can save.
 	 * @return void
 	 */
 	function codt_render_item( WP_Post $item, array $progress, bool $logged_in ): void {
@@ -102,9 +102,14 @@ if ( ! function_exists( 'codt_render_category' ) ) {
 		$term = $node['term'];
 		$tag  = 0 === $depth ? 'h2' : 'h3';
 		?>
-		<section class="codt-cat codt-cat--depth-<?php echo esc_attr( (string) min( $depth, 2 ) ); ?>" data-cat="<?php echo esc_attr( $term->slug ); ?>">
+		<section class="codt-cat codt-cat--depth-<?php echo esc_attr( (string) min( $depth, 2 ) ); ?>" data-cat="<?php echo esc_attr( $term->slug ); ?>" data-term-id="<?php echo esc_attr( (string) $term->term_id ); ?>" data-default-index="<?php echo esc_attr( (string) $node['default_index'] ); ?>">
 			<details>
 				<summary class="codt-cat__head">
+					<?php if ( $logged_in ) : ?>
+						<button type="button" class="codt-cat__drag" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: section name. */ __( 'Reorder %s. Drag, or use the up and down arrow keys.', 'codtracker' ), $term->name ) ); ?>" title="<?php esc_attr_e( 'Drag to reorder', 'codtracker' ); ?>">
+							<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><g fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></g></svg>
+						</button>
+					<?php endif; ?>
 					<<?php echo esc_html( $tag ); ?> class="codt-cat__title"><?php echo esc_html( $term->name ); ?></<?php echo esc_html( $tag ); ?>>
 					<span class="codt-cat__count" aria-live="polite"></span>
 					<span class="codt-bar" aria-hidden="true"><span class="codt-bar__fill"></span></span>
@@ -143,6 +148,7 @@ $codt_wrapper = get_block_wrapper_attributes(
 		'class'          => 'codt-tracker',
 		'data-endpoint'  => esc_url_raw( rest_url( CodTracker_Rest::NAMESPACE . '/progress' ) ),
 		'data-bulk'      => esc_url_raw( rest_url( CodTracker_Rest::NAMESPACE . '/progress/bulk' ) ),
+		'data-order'     => esc_url_raw( rest_url( CodTracker_Rest::NAMESPACE . '/sections/order' ) ),
 		'data-nonce'     => $codt_logged_in ? wp_create_nonce( 'wp_rest' ) : '',
 		'data-logged-in' => $codt_logged_in ? '1' : '0',
 	)
@@ -179,6 +185,9 @@ $codt_wrapper = get_block_wrapper_attributes(
 			</div>
 			<label class="codt-toolbar__toggle"><input type="checkbox" class="codt-toggle-unconfirmed" checked /> <?php esc_html_e( 'Show unconfirmed', 'codtracker' ); ?></label>
 			<button type="button" class="codt-expand" data-expanded="0"><?php esc_html_e( 'Expand all', 'codtracker' ); ?></button>
+			<?php if ( $codt_logged_in ) : ?>
+				<button type="button" class="codt-reset-order" disabled><?php esc_html_e( 'Reset order', 'codtracker' ); ?></button>
+			<?php endif; ?>
 			<button type="button" class="codt-wheel-btn" aria-expanded="false" aria-controls="codt-wheel-panel"><?php esc_html_e( 'Ping wheel', 'codtracker' ); ?> <span class="codt-wheel-btn__count"></span></button>
 			<div class="codt-wheel-panel" id="codt-wheel-panel" hidden>
 				<p class="codt-wheel-panel__hint">
@@ -196,6 +205,7 @@ $codt_wrapper = get_block_wrapper_attributes(
 		</div>
 
 		<div class="codt-status" role="status" aria-live="polite"></div>
+		<div class="codt-sr-status screen-reader-text" role="status" aria-live="polite"></div>
 
 		<?php
 		foreach ( $codt_tree as $codt_node ) {
